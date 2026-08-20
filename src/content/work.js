@@ -30,14 +30,14 @@ export const IDENTITY = {
  */
 export const COMMERCE_WORK = [
   { name: 'ISOA', note: 'PDP rebuild, pill rail, section gap system', url: '' },
-  { name: 'ALMOST ALWAYS', note: 'cross-SKU colour swatches, PDP + collection', url: '' },
-  { name: 'RADIANT & KEEN', note: 'theme architecture', url: '' },
-  { name: 'THE CURATED COLLECTIVE', note: 'brand import pipeline, 258 rows', url: '' },
-  { name: 'ADORE NAILS', note: 'PDP size finder, gallery, FAQ', url: '' },
-  { name: 'CALVIUM', note: 'variant resolver, lookbook', url: '' },
-  { name: 'AEQEA', note: 'Horizon subgrid, mobile nav', url: '' },
-  { name: 'SEBA DIGITAL', note: 'Dawn fork, eBay → Shopify pipeline', url: '' },
-  { name: 'APURVI', note: 'international SEO, US + UK', url: '' },
+  { name: 'ALMOST ALWAYS', note: 'cross-SKU colour swatches, PDP + collection', url: 'https://almostalways.in/' },
+  { name: 'RADIANT & KEEN', note: 'theme architecture', url: 'https://radiantandkeen.com/' },
+  { name: 'THE CURATED COLLECTIVE', note: 'brand import pipeline, 258 rows', url: 'https://thecuratedcollective.in/' },
+  { name: 'ADORE NAILS', note: 'PDP size finder, gallery, FAQ', url: 'https://adorenails.co.in/' },
+  { name: 'CALVIUM', note: 'variant resolver, lookbook', url: 'https://calvium.in/' },
+  { name: 'AEQEA', note: 'Horizon subgrid, mobile nav', url: 'https://www.aeqeaa.com/' },
+  { name: 'SEBA DIGITAL', note: 'Dawn fork, eBay → Shopify pipeline', url: 'https://www.sebadigital.co.uk/' },
+  { name: 'APURVI', note: 'international SEO, US + UK', url: 'https://apurviind.com/' },
 ];
 
 /**
