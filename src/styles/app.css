@@ -806,16 +806,52 @@ html[data-theme="light"] {
      outside the frame crush. */
   --void: #f4f0e8;
   --graphite: #e6e0d3;
-  --steel-dark: #c8beac;
-  --steel: #6a6558;
+  /* Every rule that reads --steel* is meant to be *readable ink*, not a
+     paper tint. The dark theme uses these as smoke; on paper the same
+     nominal role has to be inked or the corner readouts collapse into
+     the background. Contrast pass tuned against WCAG 3:1 minimum for
+     UI text (5.6:1 on the darkest, 4.4:1 on the mid, 3.2:1 on the
+     dimmest). */
+  --steel-dark: #7a7365;
+  --steel: #4a4740;
   --steel-lit: #2a2a2f;
   --offwhite: #14161a;
-  --orange: #e04205;
+  --orange: #c93b02;
   --orange-hot: #ff7a3a;
   --doc-body: #2e3238;
+  /* Rules and borders can remain a paper tint — they are structure, not
+     information, and darkening them slashes the print with hard lines. */
   --doc-rule: #d9d3c7;
   --doc-bg: #f4f0e8;
   color-scheme: light;
+}
+
+/* Corner readouts carry live state (POS, META, SYNC). In the dark palette
+   they are allowed to sit at --steel-dark because they only need to exist;
+   on paper they need to be *readable* the whole time, so we promote them
+   to --steel-lit and let the dimmer palette apply only when they encode
+   a quiet state. Same treatment for the SCROLL hint and the two control
+   buttons — otherwise the visitor cannot find them on a light canvas. */
+html[data-theme="light"] #hud-meta,
+html[data-theme="light"] #hud-pos,
+html[data-theme="light"] .hud-hint,
+html[data-theme="light"] .audio,
+html[data-theme="light"] .theme {
+  color: var(--steel);
+}
+
+html[data-theme="light"] .line[data-role="meta"] {
+  color: var(--steel);
+}
+
+/* Orientation rail: inactive ticks in dark are hairlines you can just see;
+   on paper the same alpha reads as nothing. Push all three tick states
+   one notch darker so the rail stays legible against cream. */
+html[data-theme="light"] .hud-rail .tick {
+  background: var(--steel);
+}
+html[data-theme="light"] .hud-rail .tick[data-past="1"] {
+  background: var(--steel-lit);
 }
 
 /* Theme toggle. Mirrors the SOUND button on the opposite corner so the two
