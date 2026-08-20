@@ -1,0 +1,747 @@
+/*
+ * The glass.
+ *
+ * Two layers, two languages. The world is photographed: it lives in canvas,
+ * passes through the lens, and carries grain, bloom and barrel distortion.
+ * The instrument lives here, on the glass, and is never photographed — so it
+ * stays hairline-crisp, selectable and accessible. The split is deliberate.
+ * Anything that is evidence belongs in the photograph. Anything that is the
+ * system talking to you belongs on the glass.
+ */
+
+:root {
+  --void: #06070a;
+  --graphite: #14161a;
+  --steel-dark: #2b3037;
+  --steel: #575f69;
+  --steel-lit: #98a1ab;
+  --offwhite: #e9e7e2;
+  --orange: #ff4d0a;
+  --orange-hot: #ffa86c;
+
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
+  --grotesque: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Inter, "Segoe UI", system-ui,
+    sans-serif;
+
+  /* Instrument type is small, wide and quiet. It reports; it does not speak. */
+  --instr-size: 10px;
+  --instr-track: 0.22em;
+
+  --gut: 22px;
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--void);
+  /* Scroll is the instrument. Nothing may interfere with its native feel. */
+  scroll-behavior: auto;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--void);
+  color: var(--offwhite);
+  font-family: var(--grotesque);
+  overflow-x: hidden;
+  /* The world is fixed; only the extent scrolls. Overscroll bounce would
+     reveal the seam at both ends of the film. */
+  overscroll-behavior-y: none;
+}
+
+.mono {
+  font-family: var(--mono);
+  font-size: var(--instr-size);
+  letter-spacing: var(--instr-track);
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  /* Tabular figures matter: a readout that reflows as digits change reads as
+     a webpage. A readout that ticks in place reads as an instrument. */
+}
+
+/* ── Frame ─────────────────────────────────────────────────────────────── */
+
+#display,
+#world {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  z-index: 1;
+}
+
+/* The 2D canvas is the negative. It is only shown directly if the lens is
+   unavailable, in which case the piece degrades to an unphotographed print. */
+#world {
+  z-index: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+html.no-lens #display {
+  display: none;
+}
+html.no-lens #world {
+  opacity: 1;
+}
+
+#scroll-extent {
+  position: relative;
+  width: 100%;
+  pointer-events: none;
+}
+
+/* ── Instrument ────────────────────────────────────────────────────────── */
+
+.hud {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  /* Held back until the first frame has been photographed. */
+  opacity: 0;
+  transition: opacity 900ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html.running .hud {
+  opacity: 1;
+}
+
+.hud-corner {
+  position: absolute;
+  display: flex;
+  gap: 14px;
+  align-items: baseline;
+  color: var(--steel);
+  white-space: nowrap;
+}
+
+.hud-tl {
+  top: calc(var(--gut) + var(--safe-t));
+  left: calc(var(--gut) + var(--safe-l));
+}
+.hud-tr {
+  top: calc(var(--gut) + var(--safe-t));
+  right: calc(var(--gut) + var(--safe-r));
+  justify-content: flex-end;
+}
+.hud-bl {
+  bottom: calc(var(--gut) + var(--safe-b));
+  left: calc(var(--gut) + var(--safe-l));
+}
+.hud-br {
+  bottom: calc(var(--gut) + var(--safe-b));
+  right: calc(var(--gut) + var(--safe-r));
+  justify-content: flex-end;
+}
+
+#hud-index {
+  color: var(--steel-lit);
+}
+
+/* The movement name is the one place the instrument is allowed to be lit. */
+#hud-name {
+  color: var(--offwhite);
+}
+
+#hud-state[data-state="accelerating"] {
+  color: var(--steel-lit);
+}
+#hud-state[data-state="desynced"] {
+  color: var(--orange);
+}
+
+#hud-sync[data-low="1"] {
+  color: var(--orange);
+}
+
+#hud-meta,
+#hud-pos {
+  color: var(--steel-dark);
+}
+
+/* Orientation rail. Thirteen ticks — position in the world, and the keyboard
+   route through the film. It is the only navigation the piece has. */
+.hud-rail {
+  position: absolute;
+  left: calc(var(--gut) + var(--safe-l));
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  pointer-events: auto;
+}
+
+.hud-rail .tick {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  display: block;
+  width: 9px;
+  height: 1px;
+  background: var(--steel-dark);
+  cursor: pointer;
+  /* The hit area is generous while the mark stays hairline. */
+  box-shadow: 0 0 0 3px transparent;
+  transition: width 420ms cubic-bezier(0.16, 1, 0.3, 1), background-color 420ms linear;
+}
+
+.hud-rail .tick::before {
+  content: "";
+  position: absolute;
+  width: 34px;
+  height: 9px;
+  transform: translate(-4px, -4px);
+}
+
+.hud-rail .tick:hover,
+.hud-rail .tick:focus-visible {
+  width: 18px;
+  background: var(--steel-lit);
+}
+
+.hud-rail .tick[data-past="1"] {
+  background: var(--steel);
+}
+
+.hud-rail .tick[data-active="1"] {
+  width: 22px;
+  background: var(--orange);
+}
+
+/* ── Narrative typography ──────────────────────────────────────────────── */
+
+/* A chapter card, not a title system. It occupies the lower-left quadrant so
+   it never sits on the subject, and it leaves after a couple of seconds. */
+.hud-stage {
+  position: absolute;
+  left: calc(var(--gut) + 34px + var(--safe-l));
+  bottom: calc(96px + var(--safe-b));
+  right: var(--gut);
+  display: block;
+}
+
+.line {
+  position: relative;
+  margin: 0;
+  color: var(--offwhite);
+  will-change: transform, letter-spacing;
+}
+
+.line[data-role="title"] {
+  font-family: var(--grotesque);
+  font-weight: 600;
+  font-size: clamp(20px, 2.9vw, 38px);
+  letter-spacing: -0.03em;
+  line-height: 1.02;
+}
+
+.line[data-role="meta"] {
+  font-family: var(--mono);
+  font-size: clamp(9px, 0.85vw, 11px);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  line-height: 1.6;
+  margin-top: 10px;
+  color: var(--steel);
+}
+
+/* Mask reveal. The clip is on the wrapper; the glyph slides inside it, so the
+   reveal reads as type arriving from behind an edge rather than fading. */
+.mask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+}
+
+.mask > span {
+  display: inline-block;
+  will-change: transform;
+}
+
+.line em {
+  font-style: normal;
+  color: var(--orange);
+}
+
+/* ── One-shot beats ────────────────────────────────────────────────────── */
+
+.hud-beat {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--mono);
+  font-size: clamp(18px, 4.4vw, 46px);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--orange);
+  opacity: 0;
+  white-space: nowrap;
+}
+
+.hud-hint {
+  position: absolute;
+  left: 50%;
+  bottom: calc(58px + var(--safe-b));
+  transform: translateX(-50%);
+  color: var(--steel-dark);
+  opacity: 0;
+  transition: opacity 1400ms linear;
+}
+
+.hud-hint[data-show="1"] {
+  opacity: 1;
+}
+
+/* ── World actions ─────────────────────────────────────────────────────── */
+
+.terminus {
+  position: fixed;
+  left: 50%;
+  bottom: calc(38px + var(--safe-b));
+  transform: translateX(-50%);
+  z-index: 20;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 1200ms linear;
+}
+
+.terminus[hidden] {
+  display: none;
+}
+
+.terminus[data-show="1"] {
+  opacity: 1;
+}
+
+.act {
+  appearance: none;
+  background: transparent;
+  border: 1px solid var(--steel-dark);
+  color: var(--steel-lit);
+  font-family: var(--mono);
+  font-size: var(--instr-size);
+  letter-spacing: var(--instr-track);
+  text-transform: uppercase;
+  text-decoration: none;
+  padding: 10px 16px 9px;
+  cursor: pointer;
+  /* Physical UI gets a spring; only here, and only on hover/press. */
+  transition: color 220ms linear, border-color 220ms linear, background-color 220ms linear,
+    transform 380ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  white-space: nowrap;
+}
+
+.act:hover,
+.act:focus-visible {
+  color: var(--void);
+  background: var(--orange);
+  border-color: var(--orange);
+  transform: translateY(-2px);
+}
+
+.act:active {
+  transform: translateY(0);
+}
+
+/* ── Sound ─────────────────────────────────────────────────────────────── */
+
+.audio {
+  position: fixed;
+  right: calc(var(--gut) + var(--safe-r));
+  bottom: calc(52px + var(--safe-b));
+  z-index: 20;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 8px;
+  color: var(--steel-dark);
+  font-family: var(--mono);
+  font-size: var(--instr-size);
+  letter-spacing: var(--instr-track);
+  text-transform: uppercase;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  opacity: 0;
+  transition: opacity 900ms linear, color 300ms linear;
+}
+
+html.running .audio {
+  opacity: 1;
+}
+
+/* Utility elements whose display is set explicitly still need to honour the
+   hidden attribute — `display: flex` silently outranks it otherwise. */
+.audio[hidden] {
+  display: none;
+}
+
+.audio:hover,
+.audio:focus-visible {
+  color: var(--steel-lit);
+}
+
+.audio[aria-pressed="true"] {
+  color: var(--orange);
+}
+
+/* Four bars. Flat when off; they only move when there is sound to report. */
+.audio-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 10px;
+}
+
+.audio-bars i {
+  display: block;
+  width: 2px;
+  height: 1px;
+  background: currentColor;
+  transition: height 120ms linear;
+}
+
+/* ── Keeping the artifact ──────────────────────────────────────────────── */
+
+/* Not a fifth call to action. It belongs to the sigil, so it sits above the
+   navigation row and reads as that object's caption. */
+.keep {
+  position: fixed;
+  left: 50%;
+  bottom: calc(90px + var(--safe-b));
+  transform: translateX(-50%);
+  z-index: 20;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 8px 12px;
+  color: var(--orange);
+  font-family: var(--mono);
+  font-size: var(--instr-size);
+  letter-spacing: var(--instr-track);
+  text-transform: uppercase;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 900ms linear, color 200ms linear;
+}
+
+.keep[hidden] {
+  display: none;
+}
+
+.keep[data-show="1"] {
+  opacity: 1;
+}
+
+.keep:hover,
+.keep:focus-visible {
+  color: var(--orange-hot);
+}
+
+/* ── The message object ────────────────────────────────────────────────── */
+
+.msg {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  background: rgba(6, 7, 10, 0.82);
+  opacity: 0;
+  transition: opacity 260ms linear;
+}
+
+.msg[hidden] {
+  display: none;
+}
+
+.msg[data-open="1"] {
+  opacity: 1;
+}
+
+.msg-body {
+  width: min(440px, calc(100vw - 32px));
+  border: 1px solid var(--steel-dark);
+  background: var(--void);
+  padding: 26px 24px 20px;
+  /* The object opens rather than fades in. */
+  transform: scaleY(0.92) translateY(8px);
+  transform-origin: center;
+  transition: transform 380ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.msg[data-open="1"] .msg-body {
+  transform: none;
+}
+
+.msg-head {
+  margin: 0 0 22px;
+  color: var(--orange);
+}
+
+.msg-field {
+  display: block;
+  margin: 0 0 16px;
+}
+
+.msg-field > span {
+  display: block;
+  color: var(--steel);
+  margin-bottom: 7px;
+}
+
+.msg-field input,
+.msg-field textarea {
+  width: 100%;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--steel-dark);
+  color: var(--offwhite);
+  font-family: var(--mono);
+  font-size: 13px;
+  padding: 7px 0;
+  resize: vertical;
+  transition: border-color 200ms linear;
+}
+
+.msg-field input:focus,
+.msg-field textarea:focus {
+  outline: none;
+  border-bottom-color: var(--orange);
+}
+
+.msg-actions {
+  display: flex;
+  gap: 4px;
+  margin-top: 24px;
+}
+
+.msg-note {
+  margin: 18px 0 0;
+  color: var(--steel-dark);
+  letter-spacing: 0.12em;
+  line-height: 1.6;
+}
+
+/* ── Focus ─────────────────────────────────────────────────────────────── */
+
+:focus-visible {
+  outline: 1px solid var(--orange);
+  outline-offset: 3px;
+}
+
+.skip {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
+  transform: translateY(-120%);
+  background: var(--orange);
+  color: var(--void);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-decoration: none;
+  padding: 12px 18px;
+  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.skip:focus {
+  transform: translateY(0);
+}
+
+/* ── The document underneath ───────────────────────────────────────────── */
+
+/*
+ * Present for crawlers and screen readers at all times, visually removed
+ * while the film is running. Promoted to the actual site under
+ * reduced-motion, when the lens is unavailable on a weak device, or when a
+ * keyboard user tabs into it.
+ */
+.doc {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.doc:focus-within,
+html.reduced .doc,
+html.doc-mode .doc {
+  position: relative;
+  z-index: 40;
+  width: auto;
+  height: auto;
+  margin: 0 auto;
+  max-width: 68ch;
+  padding: clamp(56px, 12vh, 140px) var(--gut) 140px;
+  overflow: visible;
+  clip-path: none;
+  white-space: normal;
+  background: var(--void);
+}
+
+html.reduced .hud,
+html.reduced .audio,
+html.reduced #display,
+html.reduced #world,
+html.doc-mode .hud,
+html.doc-mode .audio,
+html.doc-mode #display,
+html.doc-mode #world {
+  display: none;
+}
+
+html.reduced #scroll-extent,
+html.doc-mode #scroll-extent {
+  display: none;
+}
+
+html.reduced .terminus,
+html.doc-mode .terminus {
+  position: static;
+  transform: none;
+  opacity: 1;
+  justify-content: center;
+  padding: 0 var(--gut) 80px;
+  flex-wrap: wrap;
+}
+
+.doc-kicker {
+  color: var(--orange);
+  margin: 0 0 28px;
+}
+
+.doc h1 {
+  font-size: clamp(38px, 7vw, 76px);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 0.98;
+  margin: 0 0 24px;
+}
+
+.doc-lede {
+  font-size: clamp(17px, 2.1vw, 21px);
+  line-height: 1.55;
+  color: var(--steel-lit);
+  margin: 0;
+}
+
+.doc h2 {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--orange);
+  margin: 76px 0 18px;
+}
+
+.doc p {
+  font-size: 16px;
+  line-height: 1.72;
+  color: #b8bec6;
+  margin: 0 0 18px;
+  text-wrap: pretty;
+}
+
+.doc-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.doc-links li {
+  border-top: 1px solid var(--steel-dark);
+}
+
+.doc-links a {
+  display: block;
+  padding: 18px 0;
+  color: var(--offwhite);
+  text-decoration: none;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  transition: color 180ms linear, padding-left 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.doc-links a:hover,
+.doc-links a:focus-visible {
+  color: var(--orange);
+  padding-left: 12px;
+}
+
+.doc-foot {
+  margin-top: 96px;
+  padding-top: 28px;
+  border-top: 1px solid var(--steel-dark);
+  color: var(--steel-dark);
+}
+
+/* ── Handheld ──────────────────────────────────────────────────────────── */
+
+@media (max-width: 720px) {
+  :root {
+    --gut: 14px;
+    --instr-size: 9px;
+    --instr-track: 0.18em;
+  }
+
+  /* One dominant readout per corner. The handheld edit does not stack
+     diagnostics — there is not enough frame for three simultaneous signals. */
+  .hud-bl,
+  .hud-br {
+    display: none;
+  }
+
+  .hud-rail {
+    gap: 5px;
+  }
+
+  .terminus {
+    gap: 3px;
+  }
+
+  .act {
+    padding: 9px 11px 8px;
+  }
+}
+
+/* Very short frames: the rail competes with the corners. Drop it. */
+@media (max-height: 520px) {
+  .hud-rail {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
