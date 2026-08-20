@@ -41,10 +41,11 @@ export function current() {
 export function apply(theme) {
   const next = theme === 'light' ? 'light' : 'dark';
   html.dataset.theme = next;
-  // In light mode the cinematic canvas is hidden and the doc becomes the site.
-  html.classList.toggle('doc-mode', next === 'light');
+  // The film runs in both themes — dark is a photograph, light is a print of
+  // the same photograph. The canvas is repainted at render time by the lens
+  // and world modules, which read the theme once at init.
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', next === 'light' ? '#f6f4ef' : '#06070a');
+  if (meta) meta.setAttribute('content', next === 'light' ? '#f4f0e8' : '#06070a');
   const btn = document.getElementById('theme-toggle');
   const label = document.getElementById('theme-label');
   if (btn) btn.setAttribute('aria-pressed', next === 'light' ? 'true' : 'false');

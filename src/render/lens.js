@@ -26,6 +26,19 @@
 import { state } from '../core/state.js';
 import { clamp01, damp, lerp, norm } from '../core/math.js';
 import { MOVEMENTS } from '../content/movements.js';
+import { IS_LIGHT, PALETTE } from './world.js';
+
+/**
+ * Parse the '#rrggbb' PALETTE.void into a WebGL clear colour. The lens paints
+ * outside the frame crush with this so the letterbox reads as the same paper
+ * (or the same photograph-black) as the world underneath — not a hardcoded
+ * black that would slash across a light theme.
+ */
+function hexToVec3(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  return [((n >> 16) & 0xff) / 255, ((n >> 8) & 0xff) / 255, (n & 0xff) / 255];
+}
+const CRUSH_RGB = hexToVec3(PALETTE.void);
 
 const QUAD = new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]);
 
@@ -83,6 +96,8 @@ uniform float uBloomAmt;
 uniform float uDesync;
 uniform float uVignette;
 uniform float uFlash;
+uniform vec3  uCrushCol;
+uniform float uLight;
 
 /*
  * Decorrelated 2D hash. A cheaper two-term hash leaves visible rows and blocks
@@ -132,8 +147,15 @@ void main(){
   float vig = 1.0 - uVignette * smoothstep(0.16, 0.92, r2 * 1.9);
   col *= vig;
 
-  // Filmic shoulder. Keeps the orange from clipping to white.
-  col = (col * (2.51 * col + 0.03)) / (col * (2.43 * col + 0.59) + 0.14);
+  // Filmic shoulder. Keeps the orange from clipping to white on dark stock.
+  // On paper the same curve compresses the near-white ground down to muddy
+  // grey and steals the warmth, so light theme skips the tone map and
+  // clamps instead — the palette is already inside sRGB by construction.
+  if (uLight < 0.5) {
+    col = (col * (2.51 * col + 0.03)) / (col * (2.43 * col + 0.59) + 0.14);
+  } else {
+    col = clamp(col, 0.0, 1.0);
+  }
 
   // Grain, advanced in twenty-four discrete steps per second.
   float gt = floor(uTime * 24.0);
@@ -142,10 +164,13 @@ void main(){
   float lum = dot(col, vec3(0.299, 0.587, 0.114));
   col += g * uGrain * (1.0 - lum * 0.72);
 
-  // Frame crush. A real mask that breathes with the movement.
+  // Frame crush. A real mask that breathes with the movement. On a dark theme
+  // the mask is black by construction; on a light theme the mask is the paper
+  // colour, so the letterbox stays inside the print rather than slashing two
+  // black bars across it.
   float bar = uCrush * 0.145;
   float inside = step(bar, vUv.y) * step(vUv.y, 1.0 - bar);
-  col *= inside;
+  col = mix(uCrushCol, col, inside);
 
   // Edges of the mask carry a hairline so the frame reads as intentional.
   float edge = min(abs(vUv.y - bar), abs(vUv.y - (1.0 - bar)));
@@ -313,12 +338,14 @@ export function render(dt) {
   gl.bindTexture(gl.TEXTURE_2D, worldTex);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, sourceCanvas);
 
-  // Bright pass → A
+  // Bright pass → A. On a light theme the paper itself is above the default
+  // threshold, so it would seed the entire frame into the bloom target. Bump
+  // the threshold so only the orange signal halates on paper.
   gl.bindFramebuffer(gl.FRAMEBUFFER, fboA);
   gl.viewport(0, 0, bloomW, bloomH);
   gl.useProgram(progBright.p);
   gl.uniform1i(progBright.u.uTex, 0);
-  gl.uniform1f(progBright.u.uThreshold, 0.26);
+  gl.uniform1f(progBright.u.uThreshold, IS_LIGHT ? 0.94 : 0.26);
   drawQuad();
 
   // Horizontal blur, wide → B. This is the anamorphic axis.
@@ -362,10 +389,17 @@ export function render(dt) {
   gl.uniform1f(u.uGrain, L.grain);
   gl.uniform1f(u.uCrush, L.crush);
   gl.uniform1f(u.uAberration, 1 + state.speed * 5.5);
-  gl.uniform1f(u.uBloomAmt, 0.78 + state.speed * 0.3);
+  // Bloom is heavy on dark stock and light on paper — additive bloom over a
+  // near-white ground washes to pure white. Halation is kept only enough to
+  // give the orange nodes their signature warm bleed.
+  gl.uniform1f(u.uBloomAmt, IS_LIGHT ? 0.12 + state.speed * 0.05 : 0.78 + state.speed * 0.3);
   gl.uniform1f(u.uDesync, desync);
-  gl.uniform1f(u.uVignette, L.vignette);
+  // Vignette on paper is a warm falloff, not a black tunnel — the print
+  // needs only a hint or the corners look like burn marks.
+  gl.uniform1f(u.uVignette, IS_LIGHT ? L.vignette * 0.35 : L.vignette);
   gl.uniform1f(u.uFlash, L.flash);
+  gl.uniform3fv(u.uCrushCol, CRUSH_RGB);
+  gl.uniform1f(u.uLight, IS_LIGHT ? 1.0 : 0.0);
 
   drawQuad();
 }

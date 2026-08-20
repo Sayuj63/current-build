@@ -126,17 +126,6 @@ function main() {
     return;
   }
 
-  // Light theme also promotes doc-mode. The film is dark by intent, so once
-  // the visitor has asked for a light surface there is nothing for the
-  // cinematic pipeline to do — early-out the same way reduced-motion does.
-  if (theme.current() === 'light') {
-    terminus.wireDocumentContacts();
-    document.getElementById('audio-toggle')?.remove();
-    document.getElementById('terminus')?.remove();
-    document.getElementById('doc')?.removeAttribute('tabindex');
-    return;
-  }
-
   resetScroll();
 
   const worldCanvas = document.getElementById('world');

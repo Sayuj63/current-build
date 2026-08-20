@@ -801,17 +801,20 @@ a.proj-row:focus-visible {
  */
 
 html[data-theme="light"] {
-  --void: #f6f4ef;
-  --graphite: #eeeae1;
-  --steel-dark: #d9d3c7;
-  --steel: #8b8578;
-  --steel-lit: #4b4740;
+  /* --void has to match render/world.js PALETTE_LIGHT.void exactly, or a
+     hairline seam shows between the canvas and any CSS surface that falls
+     outside the frame crush. */
+  --void: #f4f0e8;
+  --graphite: #e6e0d3;
+  --steel-dark: #c8beac;
+  --steel: #6a6558;
+  --steel-lit: #2a2a2f;
   --offwhite: #14161a;
   --orange: #e04205;
   --orange-hot: #ff7a3a;
   --doc-body: #2e3238;
   --doc-rule: #d9d3c7;
-  --doc-bg: #f6f4ef;
+  --doc-bg: #f4f0e8;
   color-scheme: light;
 }
 
@@ -868,9 +871,8 @@ html[data-theme="light"] .theme-dot {
   background: currentColor;
 }
 
-/* In light mode the doc is the site — put the toggle where it belongs,
-   pinned near the header rather than floating over a hidden canvas. */
-html[data-theme="light"] .theme,
+/* In doc-mode / reduced-motion the film is hidden, so the toggle detaches
+   from the canvas corner and pins near the header instead. */
 html.doc-mode .theme,
 html.reduced .theme {
   position: fixed;

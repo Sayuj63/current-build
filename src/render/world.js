@@ -22,7 +22,17 @@ import { clamp, clamp01, lerp } from '../core/math.js';
 import { cam, project, proj, setViewScale, getViewScale } from './camera.js';
 import * as R from '../entity/register.js';
 
-export const PALETTE = {
+/**
+ * Two palettes. The dark palette is the film's native language — steel motes
+ * on a photograph-black void, with orange for the signal channel. The light
+ * palette is a print: dark ink on warm paper, same orange because that colour
+ * is the piece's identity and inverting it would kill the signal.
+ *
+ * The picked palette is baked into the sprite atlas and the colour lookup at
+ * init time. Because a theme change is a full page reload (see ui/theme.js
+ * for why), we never need to rebuild those tables mid-run.
+ */
+const PALETTE_DARK = {
   void: '#06070a',
   graphite: '#14161a',
   steelDark: '#2b3037',
@@ -33,6 +43,34 @@ export const PALETTE = {
   orangeHot: [255, 168, 108],
   steelRGB: [140, 152, 165],
 };
+
+const PALETTE_LIGHT = {
+  // Warm off-white paper. Not pure #fff — pure white with a film shader on it
+  // reads as an LCD glare, not a print.
+  void: '#f4f0e8',
+  graphite: '#e6e0d3',
+  steelDark: '#b6ad9d',
+  steel: '#6a6558',
+  steelLit: '#2a2a2f',
+  offwhite: '#14161a',
+  // The signal channel. On paper the same orange has to punch through a much
+  // brighter ground, so we push saturation and clip the blue channel so it
+  // doesn't gray under the light theme's linear tonemap.
+  orange: [235, 60, 0],
+  orangeHot: [255, 130, 62],
+  // Dark ink for nodes — near-black warm charcoal, so a fine stroke still
+  // reads at the tail of the alpha ramp. Neutral black looks digital on a
+  // warm ground.
+  steelRGB: [22, 22, 28],
+};
+
+const THEME =
+  typeof document !== 'undefined' && document.documentElement.dataset.theme === 'light'
+    ? 'light'
+    : 'dark';
+
+export const PALETTE = THEME === 'light' ? PALETTE_LIGHT : PALETTE_DARK;
+export const IS_LIGHT = THEME === 'light';
 
 export const FONT = {
   mono: 'ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace',
@@ -80,7 +118,13 @@ const COLOR_LUT = new Array(HEAT_STEPS * ALPHA_STEPS);
     g = g | 0;
     b = b | 0;
     for (let a = 0; a < ALPHA_STEPS; a++) {
-      COLOR_LUT[h * ALPHA_STEPS + a] = `rgba(${r},${g},${b},${(a / (ALPHA_STEPS - 1)).toFixed(3)})`;
+      // On paper the same alphas that read as smoke on black stock read as
+      // tissue — a mid-alpha line disappears against the ground. Gamma-shift
+      // the LUT for light theme so mid strokes have real ink density while
+      // the extremes stay at 0 and 1.
+      const t = a / (ALPHA_STEPS - 1);
+      const alpha = IS_LIGHT ? Math.pow(t, 0.62) : t;
+      COLOR_LUT[h * ALPHA_STEPS + a] = `rgba(${r},${g},${b},${alpha.toFixed(3)})`;
     }
   }
 })();
@@ -103,9 +147,15 @@ const spritesOrange = [];
 function buildSprites() {
   spritesSteel.length = 0;
   spritesOrange.length = 0;
+  // The softest bokeh levels are a lens signature on black stock. On paper
+  // the same wide, flat disc reads as a coffee stain — the frame loses its
+  // graphic clarity to a halo the node never earned. Cap the softness so the
+  // print keeps its linework.
+  const softMax = IS_LIGHT ? 0.5 : 0.85;
   for (let l = 0; l < SPRITE_LEVELS; l++) {
-    // level 0 is nearly hard-edged; level 5 is a wide, flat bokeh disc.
-    const soft = 0.12 + (l / (SPRITE_LEVELS - 1)) * 0.85;
+    // level 0 is nearly hard-edged; the top level is a wide bokeh disc on
+    // dark stock and a modest halo on paper.
+    const soft = 0.12 + (l / (SPRITE_LEVELS - 1)) * softMax;
     for (const [store, rgb] of [
       [spritesSteel, PALETTE.steelRGB],
       [spritesOrange, PALETTE.orange],
@@ -116,8 +166,12 @@ function buildSprites() {
       const r = SPRITE_SIZE / 2;
       const grad = g.createRadialGradient(r, r, 0, r, r, r);
       const [rr, gg, bb] = rgb;
+      // Ink density at the sprite's soft edge. On dark stock 0.72 is enough
+      // because the receiving field is already black; on paper the same
+      // number reads as chalk and the node loses its body — push it up.
+      const mid = IS_LIGHT ? 0.9 : 0.72;
       grad.addColorStop(0, `rgba(${rr},${gg},${bb},1)`);
-      grad.addColorStop(clamp(1 - soft, 0.02, 0.98), `rgba(${rr},${gg},${bb},0.72)`);
+      grad.addColorStop(clamp(1 - soft, 0.02, 0.98), `rgba(${rr},${gg},${bb},${mid})`);
       grad.addColorStop(1, `rgba(${rr},${gg},${bb},0)`);
       g.fillStyle = grad;
       g.fillRect(0, 0, SPRITE_SIZE, SPRITE_SIZE);

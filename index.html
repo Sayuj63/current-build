@@ -31,18 +31,14 @@
     <!-- Pre-paint theme. Runs before CSS is applied so a light-mode visitor
          never sees a flash of the dark palette on reload. -->
     <script>
-      // Dark is the intended first impression — the film is the piece. Light
-      // is opt-in and only survives when a previous visit explicitly asked
-      // for it. System-level prefers-color-scheme is deliberately ignored so
-      // the opening frame lands where it was directed to.
+      // Dark is the intended first impression. Light is opt-in and only
+      // survives when a previous visit explicitly asked for it. The film
+      // runs in both — light is a print of the same photograph, so the
+      // canvas is not hidden.
       (function () {
         try {
-          if (localStorage.getItem('sayuj.theme') === 'light') {
-            document.documentElement.dataset.theme = 'light';
-            document.documentElement.classList.add('doc-mode');
-          } else {
-            document.documentElement.dataset.theme = 'dark';
-          }
+          document.documentElement.dataset.theme =
+            localStorage.getItem('sayuj.theme') === 'light' ? 'light' : 'dark';
         } catch (e) {
           document.documentElement.dataset.theme = 'dark';
         }
