@@ -20,17 +20,36 @@ export const IDENTITY = {
   email: '', // e.g. you@domain.com
 };
 
-/** Storefront systems. Real stores, real theme architecture. */
+/**
+ * Storefront systems. Real stores, real theme architecture.
+ *
+ * Fill `url` in with the live storefront (or a staging/case-study link) to
+ * light that entry up as a clickable link in the Projects section of the
+ * accessible document. Leaving it empty falls back to plain text so a private
+ * or unpublished store never breaks the render.
+ */
 export const COMMERCE_WORK = [
-  { name: 'ISOA', note: 'PDP rebuild, pill rail, section gap system' },
-  { name: 'ALMOST ALWAYS', note: 'cross-SKU colour swatches, PDP + collection' },
-  { name: 'RADIANT & KEEN', note: 'theme architecture' },
-  { name: 'THE CURATED COLLECTIVE', note: 'brand import pipeline, 258 rows' },
-  { name: 'ADORE NAILS', note: 'PDP size finder, gallery, FAQ' },
-  { name: 'CALVIUM', note: 'variant resolver, lookbook' },
-  { name: 'AEQEA', note: 'Horizon subgrid, mobile nav' },
-  { name: 'SEBA DIGITAL', note: 'Dawn fork, eBay → Shopify pipeline' },
-  { name: 'APURVI', note: 'international SEO, US + UK' },
+  { name: 'ISOA', note: 'PDP rebuild, pill rail, section gap system', url: '' },
+  { name: 'ALMOST ALWAYS', note: 'cross-SKU colour swatches, PDP + collection', url: '' },
+  { name: 'RADIANT & KEEN', note: 'theme architecture', url: '' },
+  { name: 'THE CURATED COLLECTIVE', note: 'brand import pipeline, 258 rows', url: '' },
+  { name: 'ADORE NAILS', note: 'PDP size finder, gallery, FAQ', url: '' },
+  { name: 'CALVIUM', note: 'variant resolver, lookbook', url: '' },
+  { name: 'AEQEA', note: 'Horizon subgrid, mobile nav', url: '' },
+  { name: 'SEBA DIGITAL', note: 'Dawn fork, eBay → Shopify pipeline', url: '' },
+  { name: 'APURVI', note: 'international SEO, US + UK', url: '' },
+];
+
+/**
+ * Named non-commerce projects. Same rule as COMMERCE_WORK: set `url` to
+ * publish the link; leave empty for private/in-progress systems.
+ */
+export const NAMED_PROJECTS = [
+  { name: 'FLIQAI', note: 'onboarding, university & mentor discovery, essay build, admit chance', url: '' },
+  { name: 'ON-CHAIN DOCUMENT ANCHOR', note: 'SHA-256 digest, tamper-evident audit trail', url: '' },
+  { name: 'WORLDQUANT BRAIN PIPELINE', note: 'autonomous alpha generation, simulate, poll, submit', url: '' },
+  { name: 'KNOWLEDGE SUBSTRATE', note: 'unstructured sources → queryable structure', url: '' },
+  { name: 'HACKATHON CLUB', note: '500+ members, workshops, ship-or-die reviews', url: '' },
 ];
 
 /**

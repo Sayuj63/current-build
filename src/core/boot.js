@@ -25,6 +25,7 @@ import * as session from './session.js';
 import * as hud from '../ui/hud.js';
 import * as type from '../ui/type.js';
 import * as terminus from '../ui/terminus.js';
+import * as theme from '../ui/theme.js';
 import * as score from '../audio/score.js';
 
 const html = document.documentElement;
@@ -107,6 +108,10 @@ function onResize() {
 function main() {
   readEnvironment();
 
+  // Theme comes up before anything else so the doc — which may be about to
+  // become the site — paints in the correct palette on the first frame.
+  theme.init();
+
   // Reduced motion promotes the semantic document to being the site. The
   // cinematic layer enhances the document; it is not a prerequisite for it.
   // The contact path has to survive that switch, so it is wired here too —
@@ -114,6 +119,17 @@ function main() {
   // would be left with no way to reach anyone.
   if (state.reduced) {
     html.classList.add('reduced');
+    terminus.wireDocumentContacts();
+    document.getElementById('audio-toggle')?.remove();
+    document.getElementById('terminus')?.remove();
+    document.getElementById('doc')?.removeAttribute('tabindex');
+    return;
+  }
+
+  // Light theme also promotes doc-mode. The film is dark by intent, so once
+  // the visitor has asked for a light surface there is nothing for the
+  // cinematic pipeline to do — early-out the same way reduced-motion does.
+  if (theme.current() === 'light') {
     terminus.wireDocumentContacts();
     document.getElementById('audio-toggle')?.remove();
     document.getElementById('terminus')?.remove();

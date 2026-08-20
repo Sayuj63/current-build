@@ -18,6 +18,9 @@
   --offwhite: #e9e7e2;
   --orange: #ff4d0a;
   --orange-hot: #ffa86c;
+  --doc-body: #b8bec6;
+  --doc-rule: var(--steel-dark);
+  --doc-bg: var(--void);
 
   --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
   --grotesque: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Inter, "Segoe UI", system-ui,
@@ -600,7 +603,8 @@ html.doc-mode .doc {
   overflow: visible;
   clip-path: none;
   white-space: normal;
-  background: var(--void);
+  background: var(--doc-bg);
+  color: var(--offwhite);
 }
 
 html.reduced .hud,
@@ -662,7 +666,7 @@ html.doc-mode .terminus {
 .doc p {
   font-size: 16px;
   line-height: 1.72;
-  color: #b8bec6;
+  color: var(--doc-body);
   margin: 0 0 18px;
   text-wrap: pretty;
 }
@@ -674,7 +678,7 @@ html.doc-mode .terminus {
 }
 
 .doc-links li {
-  border-top: 1px solid var(--steel-dark);
+  border-top: 1px solid var(--doc-rule);
 }
 
 .doc-links a {
@@ -698,8 +702,183 @@ html.doc-mode .terminus {
 .doc-foot {
   margin-top: 96px;
   padding-top: 28px;
-  border-top: 1px solid var(--steel-dark);
+  border-top: 1px solid var(--doc-rule);
   color: var(--steel-dark);
+}
+
+/* ── Projects showcase ─────────────────────────────────────────────────
+ *
+ * A four-column row per project: kind tag, name, one-line note, and a link
+ * indicator on the right. Renders the same in dark and light — the palette
+ * variables carry the theme switch on their own.
+ */
+
+#doc-projects-list .proj {
+  border-top: 1px solid var(--doc-rule);
+}
+
+#doc-projects-list .proj:last-child {
+  border-bottom: 1px solid var(--doc-rule);
+}
+
+.proj-row {
+  display: grid;
+  grid-template-columns: 84px 1fr auto 24px;
+  align-items: baseline;
+  gap: 16px;
+  padding: 18px 0;
+  color: var(--offwhite);
+  text-decoration: none;
+  transition: color 180ms linear, padding-left 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.proj-row[data-private="1"] {
+  color: var(--steel-lit);
+  cursor: default;
+}
+
+a.proj-row:hover,
+a.proj-row:focus-visible {
+  color: var(--orange);
+  padding-left: 12px;
+}
+
+.proj-kind {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--orange);
+}
+
+.proj-name {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.proj-note {
+  font-family: var(--grotesque);
+  font-size: 13px;
+  color: var(--steel);
+  text-align: right;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.proj-arrow {
+  font-family: var(--mono);
+  font-size: 14px;
+  text-align: right;
+  color: var(--steel);
+}
+
+@media (max-width: 640px) {
+  .proj-row {
+    grid-template-columns: 64px 1fr 20px;
+    gap: 10px;
+  }
+  .proj-note {
+    grid-column: 1 / -1;
+    text-align: left;
+    padding-top: 4px;
+  }
+  .proj-arrow {
+    grid-column: 3;
+    grid-row: 1;
+  }
+}
+
+/* ── Light theme ────────────────────────────────────────────────────────
+ *
+ * The cinematic film is dark by intent — it is a photograph, and photographs
+ * do not invert. Light mode therefore promotes the semantic document to being
+ * the site (identical to reduced-motion), and repaints the palette to a warm,
+ * paper-white reading surface. The orange accent is kept because it is the
+ * one identity signal shared between the film and the document.
+ */
+
+html[data-theme="light"] {
+  --void: #f6f4ef;
+  --graphite: #eeeae1;
+  --steel-dark: #d9d3c7;
+  --steel: #8b8578;
+  --steel-lit: #4b4740;
+  --offwhite: #14161a;
+  --orange: #e04205;
+  --orange-hot: #ff7a3a;
+  --doc-body: #2e3238;
+  --doc-rule: #d9d3c7;
+  --doc-bg: #f6f4ef;
+  color-scheme: light;
+}
+
+/* Theme toggle. Mirrors the SOUND button on the opposite corner so the two
+   controls read as a matched pair rather than accumulated chrome. */
+.theme {
+  position: fixed;
+  left: calc(var(--gut) + var(--safe-l));
+  bottom: calc(52px + var(--safe-b));
+  z-index: 20;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 8px;
+  color: var(--steel-dark);
+  font-family: var(--mono);
+  font-size: var(--instr-size);
+  letter-spacing: var(--instr-track);
+  text-transform: uppercase;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  opacity: 0;
+  transition: opacity 900ms linear, color 300ms linear;
+}
+
+html.running .theme,
+html.reduced .theme,
+html.doc-mode .theme {
+  opacity: 1;
+}
+
+.theme[hidden] {
+  display: none;
+}
+
+.theme:hover,
+.theme:focus-visible {
+  color: var(--steel-lit);
+}
+
+.theme-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  background: transparent;
+  transition: background-color 200ms linear;
+}
+
+html[data-theme="light"] .theme-dot {
+  background: currentColor;
+}
+
+/* In light mode the doc is the site — put the toggle where it belongs,
+   pinned near the header rather than floating over a hidden canvas. */
+html[data-theme="light"] .theme,
+html.doc-mode .theme,
+html.reduced .theme {
+  position: fixed;
+  top: calc(var(--gut) + var(--safe-t));
+  right: calc(var(--gut) + var(--safe-r));
+  bottom: auto;
+  left: auto;
+  color: var(--steel);
 }
 
 /* ── Handheld ──────────────────────────────────────────────────────────── */
