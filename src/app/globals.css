@@ -310,6 +310,186 @@ body {
   transform: none;
 }
 
+/* Assistant chat panel: rises above the orb. */
+.chat {
+  position: absolute;
+  right: 0;
+  bottom: 76px;
+  display: flex;
+  flex-direction: column;
+  width: min(380px, calc(100vw - 32px));
+  height: min(540px, calc(100dvh - 140px));
+  overflow: hidden;
+  border: 1px solid rgba(var(--orange-rgb), 0.18);
+  border-radius: 22px;
+  color: var(--ink);
+  background: rgba(var(--paper-rgb), 0.97);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 24px 60px rgba(42, 15, 5, 0.28);
+  transform-origin: bottom right;
+  animation: chat-in 0.45s var(--ease-out);
+}
+@keyframes chat-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.96); }
+}
+.chat__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 16px 18px 12px;
+  color: #fff;
+  background: linear-gradient(120deg, rgba(var(--orange-rgb), 0.95), rgba(255, 138, 76, 0.92));
+}
+.chat__title {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1;
+}
+.chat__sub {
+  margin: 6px 0 0;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  opacity: 0.85;
+}
+.chat__close {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 20px;
+  line-height: 1;
+  background: rgba(255, 255, 255, 0.18);
+  cursor: pointer;
+}
+.chat__close:hover {
+  background: rgba(255, 255, 255, 0.32);
+}
+.chat__log {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  font: 400 14px/1.5 var(--font-sans), sans-serif;
+}
+.chat__intro p {
+  margin: 0 0 14px;
+}
+.chat__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.chat__chip {
+  padding: 8px 12px;
+  border: 1px solid rgba(var(--orange-rgb), 0.35);
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  transition: background 0.25s, color 0.25s;
+}
+.chat__chip:hover {
+  color: #fff;
+  background: var(--orange);
+}
+.chat__msg {
+  max-width: 88%;
+  padding: 10px 14px;
+  border-radius: 16px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.chat__msg--user {
+  align-self: flex-end;
+  color: #fff;
+  background: var(--orange);
+  border-bottom-right-radius: 4px;
+}
+.chat__msg--assistant {
+  align-self: flex-start;
+  background: #fff;
+  border-bottom-left-radius: 4px;
+  box-shadow: 0 2px 10px rgba(42, 15, 5, 0.06);
+}
+.chat__msg a {
+  color: var(--orange);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.chat__dots {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px 0;
+}
+.chat__dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--orange);
+  animation: chat-dot 1s ease-in-out infinite;
+}
+.chat__dots i:nth-child(2) { animation-delay: 0.15s; }
+.chat__dots i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes chat-dot {
+  0%, 100% { opacity: 0.25; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-3px); }
+}
+.chat__form {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid rgba(var(--orange-rgb), 0.14);
+}
+.chat__input {
+  flex: 1;
+  max-height: 120px;
+  padding: 10px 14px;
+  border: 1px solid rgba(var(--orange-rgb), 0.25);
+  border-radius: 14px;
+  color: var(--ink);
+  font: 400 14px/1.4 var(--font-sans), sans-serif;
+  background: #fff;
+  resize: none;
+  outline: none;
+  field-sizing: content;
+}
+.chat__input:focus {
+  border-color: var(--orange);
+}
+.chat__send {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  padding: 11px;
+  border: 0;
+  border-radius: 50%;
+  color: #fff;
+  background: var(--orange);
+  cursor: pointer;
+}
+.chat__send:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+@media (max-width: 767px) {
+  .assistant__orb {
+    width: 52px;
+    height: 52px;
+  }
+  .chat {
+    bottom: 64px;
+  }
+}
+
 .hero-kicker {
   font-size: 11px;
   line-height: 1.35;
