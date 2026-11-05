@@ -1,18 +1,13 @@
 "use client";
 
 import gsap from "gsap";
-import dynamic from "next/dynamic";
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { setMuted } from "@/lib/audio";
 import { glText } from "@/lib/glText";
 import { useApp } from "@/lib/store";
-import { GlossyButton } from "../ui/GlossyButton";
-import { GearIcon, ReturnArrow } from "../ui/icons";
+import { ReturnArrow } from "../ui/icons";
+import { Assistant, SiteHeader } from "../ui/SiteHeader";
 import { useChapters } from "./useChapters";
-import { Wordmark } from "../ui/Wordmark";
 
-const SiriOrb = dynamic(() => import("../ui/SiriOrb").then((m) => m.SiriOrb), { ssr: false });
 
 const KICKER = ["Shopify architecture, quant pipelines and", "interfaces — for brands that need it to run"];
 const LINES = ["Systems that turn", "ambiguity into", "things that work"];
@@ -57,43 +52,10 @@ function Row({ children }: { children: React.ReactNode }) {
   );
 }
 
-function SoundBars({ on, onToggle }: { on: boolean; onToggle: () => void }) {
-  return (
-    <button type="button" onClick={onToggle} aria-pressed={on} aria-label={on ? "Mute sound" : "Play sound"} className={`bars ${on ? "bars--on" : ""}`}>
-      {Array.from({ length: 7 }).map((_, i) => (
-        <i key={i} style={{ animationDelay: `${i * -0.13}s` }} />
-      ))}
-    </button>
-  );
-}
 
-/** Bottom-right assistant: a living orb whose bubble opens on hover only. Chat comes later. */
-function Assistant() {
-  const [hover, setHover] = useState(false);
-  return (
-    <div className="assistant pointer-events-none absolute bottom-7 right-7 hidden items-center gap-3 md:flex">
-      <p className={`assistant__bubble mono ${hover ? "is-open" : ""}`} aria-hidden={!hover}>
-        I&apos;m Sayuj&apos;s AI assistant. Click to talk to me.
-      </p>
-      <button
-        type="button"
-        className="assistant__orb pointer-events-auto"
-        aria-label="Open the AI assistant"
-        onMouseEnter={() => setHover(true)}
-        onMouseLeave={() => setHover(false)}
-        onFocus={() => setHover(true)}
-        onBlur={() => setHover(false)}
-      >
-        <SiriOrb active={hover} />
-      </button>
-    </div>
-  );
-}
 
 export function Hero() {
   const phase = useApp((s) => s.phase);
-  const audioOn = useApp((s) => s.audioOn);
-  const setAudioOn = useApp((s) => s.setAudioOn);
   const root = useRef<HTMLDivElement>(null);
   const copy = useRef<HTMLDivElement>(null);
   const [ready, setReady] = useState(false);
@@ -143,38 +105,10 @@ export function Hero() {
     };
   }, [phase]);
 
-  const toggleSound = () => {
-    const next = !audioOn;
-    setAudioOn(next);
-    setMuted(!next);
-  };
 
   return (
     <div ref={root} className={`hero pointer-events-none fixed inset-0 z-10 ${paper ? "on-paper" : ""}`} style={{ visibility: "hidden" }}>
-      <header className={`site-header ${headerHidden && paper ? "is-hidden" : ""} pointer-events-auto absolute inset-x-0 top-0 flex items-center justify-between px-6 pt-5 md:px-8 md:pt-6`}>
-        <Link href="/" className="nav-item" aria-label="Sayuj Pillai — home">
-          <Wordmark size={30} light />
-        </Link>
-        <nav className="nav-item mono hidden gap-8 text-white md:flex" style={{ fontSize: 12 }}>
-          <a href="#about" className="navlink">About</a>
-          <a href="#work" className="navlink">Work</a>
-          <a href="#contact" className="navlink">Contact</a>
-        </nav>
-        <button type="button" className="nav-item mono hidden items-center gap-2 text-white md:flex" style={{ fontSize: 12 }}>
-          <span className="block h-4 w-4">
-            <GearIcon />
-          </span>
-          Settings
-        </button>
-        <div className="nav-item hidden md:block">
-          <SoundBars on={audioOn} onToggle={toggleSound} />
-        </div>
-        <div className="nav-item">
-          <GlossyButton size="sm" tone="light" href="#contact" iconEnd={<ReturnArrow />}>
-            Let&apos;s talk
-          </GlossyButton>
-        </div>
-      </header>
+      <SiteHeader home hidden={headerHidden && paper} />
 
       <div ref={copy} className="gl-root absolute inset-0">
         {/* Chapter 0 — hero */}

@@ -26,7 +26,24 @@ function context() {
   return ctx;
 }
 
-export async function preloadAudio(onProgress: (p: number) => void) {
+let preloaded: Promise<void> | null = null;
+
+/** Load the sounds if the page didn't (e.g. /work opened directly). */
+export function ensureAudio() {
+  return preloadAudio(() => {});
+}
+
+/** Fetch and decode every sound once; later callers share the same load. */
+export function preloadAudio(onProgress: (p: number) => void) {
+  if (preloaded) {
+    void preloaded.then(() => onProgress(1));
+    return preloaded;
+  }
+  preloaded = loadAll(onProgress);
+  return preloaded;
+}
+
+async function loadAll(onProgress: (p: number) => void) {
   const keys = Object.keys(AUDIO) as Key[];
   let done = 0;
   await Promise.all(

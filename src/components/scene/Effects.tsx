@@ -105,7 +105,7 @@ class DistortEffectImpl extends Effect {
   }
 }
 
-function Distort() {
+export function Distort() {
   const effect = useMemo(() => new DistortEffectImpl(), []);
   useFrame(() => {
     effect.uniforms.get("uTrail")!.value = trail.texture;
